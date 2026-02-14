@@ -12,7 +12,9 @@
       @toggle-settings="toggleSettings"
       @reset-code="handleResetCode"
       @toggle-markdown="toggleMarkdown"
+      @run-code="handleRunCode"
       :show-markdown="showMarkdown"
+      :is-running="isRunning"
     />
     <div class="main-content">
       <Transition name="slide">
@@ -28,7 +30,7 @@
           ></div>
         </div>
       </Transition>
-      <div class="editor-wrapper" :class="{ 'with-sidebar': showMarkdown }">
+      <div class="editor-wrapper" :class="{ 'with-sidebar': showMarkdown, 'with-result': showResult }">
         <MonacoEditor
           ref="editorRef"
           :initial-content="codeContent"
@@ -36,6 +38,15 @@
         />
       </div>
     </div>
+    <ResultPanel 
+      :visible="showResult" 
+      :result="runResult" 
+      :loading="isRunning"
+      :execution-time="runResult.executionTime"
+      :input="userInput"
+      @update:input="userInput = $event"
+      @close="showResult = false"
+    />
     <StatusBar :line="currentLine" :column="currentColumn" :language="'Java'" />
     <SettingsPanel v-if="showSettings" @close="showSettings = false" />
   </div>
@@ -48,6 +59,8 @@ import ToolBar from './components/ToolBar.vue'
 import StatusBar from './components/StatusBar.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import MarkdownPanel from './components/MarkdownPanel.vue'
+import ResultPanel from './components/ResultPanel.vue'
+import { codeApi } from './api/codeApi'
 
 const DEFAULT_CODE = `import java.util.Scanner;
 
@@ -65,6 +78,10 @@ const currentColumn = ref(1)
 const showSettings = ref(false)
 const showMarkdown = ref(false)
 const markdownWidth = ref(400)
+const showResult = ref(false)
+const isRunning = ref(false)
+const runResult = ref({})
+const userInput = ref('')
 
 const handleNewFile = () => {
   codeContent.value = ''
@@ -139,6 +156,39 @@ const handleCodeChange = ({ line, column }) => {
   currentColumn.value = column
 }
 
+const handleRunCode = async () => {
+  const code = editorRef.value?.getContent()
+  if (!code) return
+  
+  const needsInput = /Scanner|System\.in|nextLine|nextInt|nextDouble|nextLong|nextFloat|nextBoolean|next\(\)/.test(code)
+  
+  if (needsInput && !userInput.value.trim()) {
+    showResult.value = true
+    runResult.value = {
+      success: false,
+      error: '程序需要输入数据，请先在输入框中填写数据后再运行！\n\n例如：\n- 如果程序需要读取一个整数，输入框填写：10\n- 如果程序需要读取多个值，每行填写一个值'
+    }
+    return
+  }
+  
+  isRunning.value = true
+  showResult.value = true
+  runResult.value = {}
+  
+  try {
+    const result = await codeApi.runCode(code, userInput.value, 30000)
+    runResult.value = result
+  } catch (error) {
+    runResult.value = {
+      success: false,
+      error: error.message || '运行失败'
+    }
+  } finally {
+    isRunning.value = false
+    userInput.value = ''
+  }
+}
+
 let isResizing = false
 
 const startResize = (e) => {
@@ -164,6 +214,20 @@ const stopResize = () => {
   document.body.style.cursor = ''
   document.body.style.userSelect = ''
 }
+
+onMounted(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === 'F5') {
+      e.preventDefault()
+      handleRunCode()
+    }
+  }
+  window.addEventListener('keydown', handleKeyDown)
+  
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeyDown)
+  })
+})
 
 onUnmounted(() => {
   document.removeEventListener('mousemove', handleResize)

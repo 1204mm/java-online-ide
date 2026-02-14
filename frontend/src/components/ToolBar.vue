@@ -55,6 +55,12 @@
       <div class="toolbar-divider"></div>
       
       <div class="toolbar-group">
+        <button class="toolbar-btn run-btn" @click="$emit('runCode')" :disabled="isRunning" title="运行代码 (F5)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <span>{{ isRunning ? '运行中...' : '运行' }}</span>
+        </button>
         <button class="toolbar-btn" @click="$emit('formatCode')" title="格式化代码 (Ctrl+Alt+L)">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
             <path d="M3 21h18v-2H3v2zm0-4h18v-2H3v2zm0-4h18v-2H3v2zm0-4h18V7H3v2zm0-6v2h18V3H3z"/>
@@ -245,12 +251,16 @@ defineProps({
   showMarkdown: {
     type: Boolean,
     default: false
+  },
+  isRunning: {
+    type: Boolean,
+    default: false
   }
 })
 
 const showShortcuts = ref(false)
 
-defineEmits(['newFile', 'openFile', 'saveFile', 'formatCode', 'undo', 'redo', 'find', 'replace', 'toggleSettings', 'resetCode', 'toggleMarkdown'])
+defineEmits(['newFile', 'openFile', 'saveFile', 'formatCode', 'undo', 'redo', 'find', 'replace', 'toggleSettings', 'resetCode', 'toggleMarkdown', 'runCode'])
 </script>
 
 <style scoped>
@@ -309,6 +319,21 @@ defineEmits(['newFile', 'openFile', 'saveFile', 'formatCode', 'undo', 'redo', 'f
 .toolbar-btn.active {
   background-color: var(--accent-color, #4a90d9);
   color: white;
+}
+
+.toolbar-btn.run-btn {
+  background-color: #2ea043;
+  color: white;
+}
+
+.toolbar-btn.run-btn:hover {
+  background-color: #3fb950;
+}
+
+.toolbar-btn.run-btn:disabled {
+  background-color: #484f58;
+  color: #8b949e;
+  cursor: not-allowed;
 }
 
 .toolbar-btn svg {
