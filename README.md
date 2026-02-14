@@ -1,6 +1,6 @@
 # Java算法刷题编辑器
 
-一个专门为算法刷题设计的Java代码编辑器网页版，基于Vue3 + Monaco Editor构建，提供IntelliJ IDEA风格的体验。
+一个轻量级的Java代码编辑器网页版，基于Vue3 + Monaco Editor构建，提供IntelliJ IDEA风格的开发体验，适用于算法学习和日常练习。
 
 ## 功能特性
 
