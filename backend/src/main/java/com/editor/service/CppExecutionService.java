@@ -268,7 +268,7 @@ public class CppExecutionService {
             Future<String> future = executorService.submit(task);
             
             try {
-                String output = future.get(timeout, TimeUnit.MILLISECONDS);
+                String output = future.get(timeout + 1000, TimeUnit.MILLISECONDS);
                 result.setSuccess(true);
                 result.setOutput(output);
             } catch (TimeoutException e) {
@@ -416,7 +416,7 @@ public class CppExecutionService {
             Future<String> future = executorService.submit(task);
             
             try {
-                String output = future.get(timeout, TimeUnit.MILLISECONDS);
+                String output = future.get(timeout + 1000, TimeUnit.MILLISECONDS);
                 result.setSuccess(true);
                 result.setOutput(output);
             } catch (TimeoutException e) {
