@@ -13,8 +13,10 @@
       @reset-code="handleResetCode"
       @toggle-markdown="toggleMarkdown"
       @run-code="handleRunCode"
+      @language-change="handleLanguageChange"
       :show-markdown="showMarkdown"
       :is-running="isRunning"
+      :language="currentLanguage"
     />
     <div class="main-content">
       <Transition name="slide">
@@ -34,6 +36,7 @@
         <MonacoEditor
           ref="editorRef"
           :initial-content="codeContent"
+          :language="currentLanguage"
           @change="handleCodeChange"
         />
       </div>
@@ -47,13 +50,13 @@
       @update:input="userInput = $event"
       @close="showResult = false"
     />
-    <StatusBar :line="currentLine" :column="currentColumn" :language="'Java'" />
+    <StatusBar :line="currentLine" :column="currentColumn" :language="languageDisplay" />
     <SettingsPanel v-if="showSettings" @close="showSettings = false" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MonacoEditor from './components/MonacoEditor.vue'
 import ToolBar from './components/ToolBar.vue'
 import StatusBar from './components/StatusBar.vue'
@@ -62,7 +65,7 @@ import MarkdownPanel from './components/MarkdownPanel.vue'
 import ResultPanel from './components/ResultPanel.vue'
 import { codeApi } from './api/codeApi'
 
-const DEFAULT_CODE = `import java.util.Scanner;
+const DEFAULT_JAVA_CODE = `import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
@@ -70,9 +73,29 @@ public class Main {
     }
 }`
 
+const DEFAULT_CPP_CODE = `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    return 0;
+}`
+
+const DEFAULT_C_CODE = `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    return 0;
+}`
+
 const editorRef = ref(null)
 const markdownRef = ref(null)
-const codeContent = ref(DEFAULT_CODE)
+const codeContent = ref(DEFAULT_JAVA_CODE)
 const currentLine = ref(1)
 const currentColumn = ref(1)
 const showSettings = ref(false)
@@ -82,21 +105,46 @@ const showResult = ref(false)
 const isRunning = ref(false)
 const runResult = ref({})
 const userInput = ref('')
+const currentLanguage = ref('java')
+
+const languageDisplay = computed(() => {
+  const langMap = {
+    'java': 'Java',
+    'cpp': 'C++',
+    'c': 'C'
+  }
+  return langMap[currentLanguage.value] || 'Java'
+})
+
+const handleLanguageChange = (lang) => {
+  currentLanguage.value = lang
+  let defaultCode = DEFAULT_JAVA_CODE
+  if (lang === 'cpp') {
+    defaultCode = DEFAULT_CPP_CODE
+  } else if (lang === 'c') {
+    defaultCode = DEFAULT_C_CODE
+  }
+  codeContent.value = defaultCode
+  editorRef.value?.setLanguage(lang)
+  editorRef.value?.setContent(defaultCode)
+  userInput.value = ''
+  showResult.value = false
+}
 
 const handleNewFile = () => {
-  codeContent.value = ''
-  editorRef.value?.setContent('')
+  handleLanguageChange(currentLanguage.value)
 }
 
 const handleResetCode = () => {
-  codeContent.value = DEFAULT_CODE
-  editorRef.value?.setContent(DEFAULT_CODE)
+  handleLanguageChange(currentLanguage.value)
 }
 
 const handleOpenFile = () => {
   const input = document.createElement('input')
   input.type = 'file'
-  input.accept = '.java'
+  const extensions = currentLanguage.value === 'java' ? '.java' : 
+                     currentLanguage.value === 'cpp' ? '.cpp,.cxx,.cc' : '.c'
+  input.accept = extensions
   input.onchange = (e) => {
     const file = e.target.files[0]
     if (file) {
@@ -118,7 +166,9 @@ const handleSaveFile = () => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'Untitled.java'
+  const ext = currentLanguage.value === 'java' ? 'java' : 
+              currentLanguage.value === 'cpp' ? 'cpp' : 'c'
+  a.download = `Untitled.${ext}`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -160,7 +210,7 @@ const handleRunCode = async () => {
   const code = editorRef.value?.getContent()
   if (!code) return
   
-  const needsInput = /Scanner|System\.in|nextLine|nextInt|nextDouble|nextLong|nextFloat|nextBoolean|next\(\)/.test(code)
+  const needsInput = /Scanner|System\.in|cin|scanf|getchar|gets/.test(code)
   
   if (needsInput && !userInput.value.trim()) {
     showResult.value = true
@@ -176,7 +226,7 @@ const handleRunCode = async () => {
   runResult.value = {}
   
   try {
-    const result = await codeApi.runCode(code, userInput.value, 30000)
+    const result = await codeApi.runCode(code, userInput.value, currentLanguage.value, 30000)
     runResult.value = result
   } catch (error) {
     runResult.value = {

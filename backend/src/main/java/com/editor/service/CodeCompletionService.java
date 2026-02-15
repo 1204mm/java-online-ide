@@ -12,574 +12,346 @@ import java.util.Map;
 @Service
 public class CodeCompletionService {
     
-    private final Map<String, List<CompletionItem>> classMembers = new HashMap<>();
+    private final Map<String, List<CompletionItem>> javaClassMembers = new HashMap<>();
+    private final Map<String, List<CompletionItem>> cppFunctions = new HashMap<>();
+    private final List<CompletionItem> cppKeywords = new ArrayList<>();
+    private final List<CompletionItem> cppSTL = new ArrayList<>();
     
     @PostConstruct
     public void init() {
-        initWrapperClasses();
-        initStringClasses();
-        initMathClasses();
-        initCollectionClasses();
-        initUtilityClasses();
-        initIOClasses();
+        initJavaClasses();
+        initCppCompletions();
     }
     
-    private void initWrapperClasses() {
-        addClass("Integer", "class", "java.lang.Integer", new String[]{
-            "parseInt(String s)", "valueOf(int i)", "valueOf(String s)", "toString()", "toString(int i)",
-            "intValue()", "longValue()", "doubleValue()", "floatValue()", "byteValue()", "shortValue()",
-            "compareTo(Integer anotherInteger)", "compare(int x, int y)", "max(int a, int b)", "min(int a, int b)",
-            "sum(int a, int b)", "toBinaryString(int i)", "toHexString(int i)", "toOctalString(int i)",
-            "decode(String nm)", "getInteger(String nm)", "getInteger(String nm, int val)"
-        }, new String[]{
-            "int", "Integer", "Integer", "String", "String",
-            "int", "long", "double", "float", "byte", "short",
-            "int", "int", "int", "int",
-            "int", "String", "String", "String",
-            "Integer", "Integer", "Integer"
-        });
+    private void initJavaClasses() {
+        addJavaClass("Integer", new String[]{
+            "parseInt(String s)", "valueOf(int i)", "valueOf(String s)", "toString()",
+            "intValue()", "longValue()", "doubleValue()", "floatValue()",
+            "compareTo(Integer anotherInteger)", "max(int a, int b)", "min(int a, int b)"
+        }, new String[]{"int", "Integer", "Integer", "String", "int", "long", "double", "float", "int", "int", "int"});
         
-        addClass("Long", "class", "java.lang.Long", new String[]{
-            "parseLong(String s)", "valueOf(long l)", "valueOf(String s)", "toString()", "toString(long l)",
-            "longValue()", "intValue()", "doubleValue()", "floatValue()",
-            "compareTo(Long anotherLong)", "compare(long x, long y)", "max(long a, long b)", "min(long a, long b)",
-            "sum(long a, long b)", "toBinaryString(long i)", "toHexString(long i)", "toOctalString(long i)"
-        }, new String[]{
-            "long", "Long", "Long", "String", "String",
-            "long", "int", "double", "float",
-            "int", "int", "long", "long",
-            "long", "String", "String", "String"
-        });
+        addJavaClass("Long", new String[]{
+            "parseLong(String s)", "valueOf(long l)", "toString()", "longValue()", "intValue()"
+        }, new String[]{"long", "Long", "String", "long", "int"});
         
-        addClass("Double", "class", "java.lang.Double", new String[]{
-            "parseDouble(String s)", "valueOf(double d)", "valueOf(String s)", "toString()", "toString(double d)",
-            "doubleValue()", "intValue()", "longValue()", "floatValue()",
-            "compareTo(Double anotherDouble)", "compare(double d1, double d2)",
-            "isNaN(double v)", "isInfinite(double v)", "sum(double a, double b)", "max(double a, double b)", "min(double a, double b)"
-        }, new String[]{
-            "double", "Double", "Double", "String", "String",
-            "double", "int", "long", "float",
-            "int", "int",
-            "boolean", "boolean", "double", "double", "double"
-        });
+        addJavaClass("Double", new String[]{
+            "parseDouble(String s)", "valueOf(double d)", "toString()", "doubleValue()"
+        }, new String[]{"double", "Double", "String", "double"});
         
-        addClass("Float", "class", "java.lang.Float", new String[]{
-            "parseFloat(String s)", "valueOf(float f)", "valueOf(String s)", "toString()", "toString(float f)",
-            "floatValue()", "doubleValue()", "intValue()", "longValue()",
-            "compareTo(Float anotherFloat)", "compare(float f1, float f2)",
-            "isNaN(float v)", "isInfinite(float v)"
-        }, new String[]{
-            "float", "Float", "Float", "String", "String",
-            "float", "double", "int", "long",
-            "int", "int",
-            "boolean", "boolean"
-        });
-        
-        addClass("Boolean", "class", "java.lang.Boolean", new String[]{
-            "parseBoolean(String s)", "valueOf(boolean b)", "valueOf(String s)", "toString()", "toString(boolean b)",
-            "booleanValue()", "compareTo(Boolean b)", "logicalAnd(boolean a, boolean b)",
-            "logicalOr(boolean a, boolean b)", "logicalXor(boolean a, boolean b)"
-        }, new String[]{
-            "boolean", "Boolean", "Boolean", "String", "String",
-            "boolean", "int", "boolean",
-            "boolean", "boolean"
-        });
-        
-        addClass("Character", "class", "java.lang.Character", new String[]{
-            "charValue()", "compareTo(Character anotherCharacter)", "toString()", "toString(char c)",
-            "isDigit(char ch)", "isLetter(char ch)", "isLetterOrDigit(char ch)", "isUpperCase(char ch)",
-            "isLowerCase(char ch)", "isWhitespace(char ch)", "toUpperCase(char ch)", "toLowerCase(char ch)",
-            "getNumericValue(char ch)", "digit(char ch, int radix)", "forDigit(int digit, int radix)"
-        }, new String[]{
-            "char", "int", "String", "String",
-            "boolean", "boolean", "boolean", "boolean",
-            "boolean", "boolean", "char", "char",
-            "int", "int", "char"
-        });
-        
-        addClass("Byte", "class", "java.lang.Byte", new String[]{
-            "parseByte(String s)", "valueOf(byte b)", "valueOf(String s)", "toString()", "toString(byte b)",
-            "byteValue()", "shortValue()", "intValue()", "longValue()", "floatValue()", "doubleValue()",
-            "compareTo(Byte anotherByte)", "compare(byte x, byte y)"
-        }, new String[]{
-            "byte", "Byte", "Byte", "String", "String",
-            "byte", "short", "int", "long", "float", "double",
-            "int", "int"
-        });
-        
-        addClass("Short", "class", "java.lang.Short", new String[]{
-            "parseShort(String s)", "valueOf(short s)", "valueOf(String s)", "toString()", "toString(short s)",
-            "shortValue()", "byteValue()", "intValue()", "longValue()", "floatValue()", "doubleValue()",
-            "compareTo(Short anotherShort)", "compare(short x, short y)"
-        }, new String[]{
-            "short", "Short", "Short", "String", "String",
-            "short", "byte", "int", "long", "float", "double",
-            "int", "int"
-        });
-    }
-    
-    private void initStringClasses() {
-        addClass("String", "class", "java.lang.String", new String[]{
+        addJavaClass("String", new String[]{
             "length()", "charAt(int index)", "substring(int beginIndex)", "substring(int beginIndex, int endIndex)",
-            "indexOf(String str)", "indexOf(String str, int fromIndex)", "lastIndexOf(String str)",
-            "contains(CharSequence s)", "startsWith(String prefix)", "endsWith(String suffix)",
-            "isEmpty()", "isBlank()", "trim()", "strip()", "stripLeading()", "stripTrailing()",
-            "toLowerCase()", "toUpperCase()", "toLowerCase(Locale locale)", "toUpperCase(Locale locale)",
-            "replace(char oldChar, char newChar)", "replace(CharSequence target, CharSequence replacement)",
-            "replaceAll(String regex, String replacement)", "replaceFirst(String regex, String replacement)",
-            "split(String regex)", "split(String regex, int limit)",
-            "equals(Object anObject)", "equalsIgnoreCase(String anotherString)", "compareTo(String anotherString)",
-            "compareToIgnoreCase(String str)", "matches(String regex)",
-            "concat(String str)", "join(CharSequence delimiter, CharSequence... elements)",
-            "format(String format, Object... args)", "valueOf(Object obj)", "valueOf(int i)", "valueOf(long l)",
-            "valueOf(double d)", "valueOf(float f)", "valueOf(boolean b)", "valueOf(char c)", "valueOf(char[] data)",
-            "toCharArray()", "getBytes()", "getBytes(String charsetName)", "intern()",
-            "repeat(int count)", "lines()", "indent(int n)", "stripIndent()", "translateEscapes()"
-        }, new String[]{
-            "int", "char", "String", "String",
-            "int", "int", "int",
-            "boolean", "boolean", "boolean",
-            "boolean", "boolean", "String", "String", "String", "String",
-            "String", "String", "String", "String",
-            "String", "String",
-            "String", "String",
-            "String[]", "String[]",
-            "boolean", "boolean", "int",
-            "int", "boolean",
-            "String", "String",
-            "String", "String", "String", "String", "String",
-            "String", "String", "String", "String", "String", "String", "String", "String",
-            "char[]", "byte[]", "byte[]", "String",
-            "String", "Stream<String>", "String", "String", "String"
-        });
+            "indexOf(String str)", "lastIndexOf(String str)", "contains(CharSequence s)",
+            "startsWith(String prefix)", "endsWith(String suffix)", "trim()", "strip()",
+            "isEmpty()", "isBlank()", "toLowerCase()", "toUpperCase()",
+            "replace(char oldChar, char newChar)", "replaceAll(String regex, String replacement)",
+            "split(String regex)", "equals(Object obj)", "equalsIgnoreCase(String str)",
+            "compareTo(String str)", "toCharArray()", "getBytes()", "valueOf(Object obj)"
+        }, new String[]{"int", "char", "String", "String", "int", "int", "boolean", "boolean", "boolean", "String", "String", "boolean", "boolean", "String", "String", "String", "String", "String[]", "boolean", "boolean", "int", "char[]", "byte[]", "String"});
         
-        addClass("StringBuilder", "class", "java.lang.StringBuilder", new String[]{
-            "append(String str)", "append(int i)", "append(long l)", "append(double d)", "append(float f)",
-            "append(boolean b)", "append(char c)", "append(char[] str)", "append(Object obj)",
-            "insert(int offset, String str)", "insert(int offset, int i)", "insert(int offset, long l)",
-            "delete(int start, int end)", "deleteCharAt(int index)",
-            "replace(int start, int end, String str)", "reverse()",
-            "charAt(int index)", "setCharAt(int index, char ch)", "length()", "capacity()", "setLength(int newLength)",
-            "substring(int start)", "substring(int start, int end)", "toString()", "trimToSize()",
-            "indexOf(String str)", "indexOf(String str, int fromIndex)", "lastIndexOf(String str)"
-        }, new String[]{
-            "StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder",
-            "StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder",
-            "StringBuilder", "StringBuilder", "StringBuilder",
-            "StringBuilder", "StringBuilder",
-            "StringBuilder", "StringBuilder",
-            "char", "void", "int", "int", "void",
-            "String", "String", "String", "void",
-            "int", "int", "int"
-        });
-        
-        addClass("StringBuffer", "class", "java.lang.StringBuffer", new String[]{
-            "append(String str)", "append(int i)", "append(long l)", "append(double d)",
-            "insert(int offset, String str)", "delete(int start, int end)", "deleteCharAt(int index)",
-            "replace(int start, int end, String str)", "reverse()",
-            "charAt(int index)", "setCharAt(int index, char ch)", "length()", "capacity()",
-            "substring(int start)", "substring(int start, int end)", "toString()",
-            "indexOf(String str)", "lastIndexOf(String str)"
-        }, new String[]{
-            "StringBuffer", "StringBuffer", "StringBuffer", "StringBuffer",
-            "StringBuffer", "StringBuffer", "StringBuffer",
-            "StringBuffer", "StringBuffer",
-            "char", "void", "int", "int",
-            "String", "String", "String",
-            "int", "int"
-        });
-    }
-    
-    private void initMathClasses() {
-        addClass("Math", "class", "java.lang.Math", new String[]{
+        addJavaClass("Math", new String[]{
             "abs(int a)", "abs(long a)", "abs(double a)", "abs(float a)",
-            "max(int a, int b)", "max(long a, long b)", "max(double a, double b)", "max(float a, float b)",
-            "min(int a, int b)", "min(long a, long b)", "min(double a, double b)", "min(float a, float b)",
+            "max(int a, int b)", "max(long a, long b)", "max(double a, double b)",
+            "min(int a, int b)", "min(long a, long b)", "min(double a, double b)",
             "pow(double a, double b)", "sqrt(double a)", "cbrt(double a)",
-            "exp(double a)", "log(double a)", "log10(double a)", "log1p(double x)",
-            "sin(double a)", "cos(double a)", "tan(double a)",
-            "asin(double a)", "acos(double a)", "atan(double a)", "atan2(double y, double x)",
-            "toRadians(double angdeg)", "toDegrees(double angrad)",
-            "floor(double a)", "ceil(double a)", "round(float a)", "round(double a)",
-            "random()", "rint(double a)", "floorDiv(int x, int y)", "floorMod(int x, int y)",
-            "addExact(int x, int y)", "subtractExact(int x, int y)", "multiplyExact(int x, int y)",
-            "incrementExact(int a)", "decrementExact(int a)", "negateExact(int a)"
-        }, new String[]{
-            "int", "long", "double", "float",
-            "int", "long", "double", "float",
-            "int", "long", "double", "float",
-            "double", "double", "double",
-            "double", "double", "double", "double",
-            "double", "double", "double",
-            "double", "double", "double", "double",
-            "double", "double",
-            "double", "double", "int", "long",
-            "double", "double", "int", "int",
-            "int", "int", "int",
-            "int", "int", "int"
-        });
+            "floor(double a)", "ceil(double a)", "round(double a)",
+            "random()", "sin(double a)", "cos(double a)", "tan(double a)",
+            "log(double a)", "log10(double a)", "exp(double a)"
+        }, new String[]{"int", "long", "double", "float", "int", "long", "double", "int", "long", "double", "double", "double", "double", "double", "double", "long", "double", "double", "double", "double", "double", "double", "double"});
         
-        addClass("Random", "class", "java.util.Random", new String[]{
-            "nextInt()", "nextInt(int bound)", "nextLong()", "nextDouble()", "nextFloat()",
-            "nextBoolean()", "nextBytes(byte[] bytes)", "nextGaussian()",
-            "ints()", "ints(int streamSize)", "ints(int randomNumberOrigin, int randomNumberBound)",
-            "doubles()", "doubles(int streamSize)", "setSeed(long seed)"
-        }, new String[]{
-            "int", "int", "long", "double", "float",
-            "boolean", "void", "double",
-            "IntStream", "IntStream", "IntStream",
-            "DoubleStream", "DoubleStream", "void"
-        });
-    }
-    
-    private void initCollectionClasses() {
-        addClass("List", "interface", "java.util.List", new String[]{
-            "add(E e)", "add(int index, E element)", "addAll(Collection<? extends E> c)",
-            "remove(int index)", "remove(Object o)", "removeAll(Collection<?> c)",
-            "get(int index)", "set(int index, E element)", "indexOf(Object o)", "lastIndexOf(Object o)",
-            "contains(Object o)", "containsAll(Collection<?> c)", "isEmpty()", "size()",
-            "clear()", "toArray()", "toArray(T[] a)", "iterator()", "listIterator()",
-            "subList(int fromIndex, int toIndex)", "sort(Comparator<? super E> c)",
-            "replaceAll(UnaryOperator<E> operator)"
-        }, new String[]{
-            "boolean", "void", "boolean",
-            "E", "boolean", "boolean",
-            "E", "E", "int", "int",
-            "boolean", "boolean", "boolean", "int",
-            "void", "Object[]", "T[]", "Iterator<E>", "ListIterator<E>",
-            "List<E>", "void",
-            "void"
-        });
+        addJavaClass("Scanner", new String[]{
+            "next()", "nextLine()", "nextInt()", "nextLong()", "nextDouble()",
+            "nextFloat()", "nextBoolean()", "hasNext()", "hasNextInt()", "hasNextLine()", "close()"
+        }, new String[]{"String", "String", "int", "long", "double", "float", "boolean", "boolean", "boolean", "boolean", "void"});
         
-        addClass("ArrayList", "class", "java.util.ArrayList", new String[]{
-            "add(E e)", "add(int index, E element)", "addAll(Collection<? extends E> c)",
-            "remove(int index)", "remove(Object o)", "removeAll(Collection<?> c)", "removeIf(Predicate<? super E> filter)",
-            "get(int index)", "set(int index, E element)", "indexOf(Object o)", "lastIndexOf(Object o)",
-            "contains(Object o)", "isEmpty()", "size()", "clear()",
-            "toArray()", "toArray(T[] a)", "clone()",
-            "ensureCapacity(int minCapacity)", "trimToSize()",
-            "forEach(Consumer<? super E> action)", "sort(Comparator<? super E> c)"
-        }, new String[]{
-            "boolean", "void", "boolean",
-            "E", "boolean", "boolean", "boolean",
-            "E", "E", "int", "int",
-            "boolean", "boolean", "int", "void",
-            "Object[]", "T[]", "Object",
-            "void", "void",
-            "void", "void"
-        });
+        addJavaClass("Arrays", new String[]{
+            "sort(int[] a)", "sort(int[] a, int fromIndex, int toIndex)", "parallelSort(int[] a)",
+            "binarySearch(int[] a, int key)", "fill(int[] a, int val)", "fill(int[] a, int fromIndex, int toIndex, int val)",
+            "copyOf(int[] original, int newLength)", "copyOfRange(int[] original, int from, int to)",
+            "equals(int[] a, int[] a2)", "toString(int[] a)", "deepToString(Object[] a)", "asList(T... a)"
+        }, new String[]{"void", "void", "void", "int", "void", "void", "int[]", "int[]", "boolean", "String", "String", "List<T>"});
         
-        addClass("LinkedList", "class", "java.util.LinkedList", new String[]{
-            "add(E e)", "add(int index, E element)", "addFirst(E e)", "addLast(E e)",
-            "remove(int index)", "remove(Object o)", "removeFirst()", "removeLast()",
-            "get(int index)", "getFirst()", "getLast()", "set(int index, E element)",
-            "indexOf(Object o)", "lastIndexOf(Object o)", "contains(Object o)",
-            "size()", "isEmpty()", "clear()", "toArray()",
-            "peek()", "poll()", "pollFirst()", "pollLast()",
-            "push(E e)", "pop()"
-        }, new String[]{
-            "boolean", "void", "void", "void",
-            "E", "boolean", "E", "E",
-            "E", "E", "E", "E",
-            "int", "int", "boolean",
-            "int", "boolean", "void", "Object[]",
-            "E", "E", "E", "E",
-            "void", "E"
-        });
+        addJavaClass("Collections", new String[]{
+            "sort(List<T> list)", "sort(List<T> list, Comparator<? super T> c)", "reverse(List<?> list)",
+            "shuffle(List<?> list)", "binarySearch(List<? extends T> list, T key)",
+            "max(Collection<? extends T> coll)", "min(Collection<? extends T> coll)",
+            "fill(List<? super T> list, T obj)", "copy(List<? super T> dest, List<? extends T> src)",
+            "swap(List<?> list, int i, int j)", "frequency(Collection<?> c, Object o)", "addAll(Collection<? super T> c, T... elements)"
+        }, new String[]{"void", "void", "void", "void", "int", "T", "T", "void", "void", "void", "int", "boolean"});
         
-        addClass("Set", "interface", "java.util.Set", new String[]{
-            "add(E e)", "addAll(Collection<? extends E> c)",
-            "remove(Object o)", "removeAll(Collection<?> c)", "retainAll(Collection<?> c)",
-            "contains(Object o)", "containsAll(Collection<?> c)", "isEmpty()", "size()",
-            "clear()", "toArray()", "iterator()",
-            "spliterator()", "stream()", "parallelStream()"
-        }, new String[]{
-            "boolean", "boolean",
-            "boolean", "boolean", "boolean",
-            "boolean", "boolean", "boolean", "int",
-            "void", "Object[]", "Iterator<E>",
-            "Spliterator<E>", "Stream<E>", "Stream<E>"
-        });
+        addJavaClass("List", new String[]{
+            "add(E e)", "add(int index, E element)", "get(int index)", "set(int index, E element)",
+            "remove(int index)", "remove(Object o)", "size()", "isEmpty()", "clear()",
+            "contains(Object o)", "indexOf(Object o)", "lastIndexOf(Object o)", "toArray()", "subList(int fromIndex, int toIndex)"
+        }, new String[]{"boolean", "void", "E", "E", "E", "boolean", "int", "boolean", "void", "boolean", "int", "int", "Object[]", "List<E>"});
         
-        addClass("HashSet", "class", "java.util.HashSet", new String[]{
-            "add(E e)", "remove(Object o)", "contains(Object o)",
-            "isEmpty()", "size()", "clear()", "clone()",
-            "toArray()", "iterator()", "spliterator()"
-        }, new String[]{
-            "boolean", "boolean", "boolean",
-            "boolean", "int", "void", "Object",
-            "Object[]", "Iterator<E>", "Spliterator<E>"
-        });
+        addJavaClass("ArrayList", new String[]{
+            "add(E e)", "get(int index)", "set(int index, E element)", "remove(int index)",
+            "size()", "isEmpty()", "clear()", "contains(Object o)", "indexOf(Object o)", "toArray()"
+        }, new String[]{"boolean", "E", "E", "E", "int", "boolean", "void", "boolean", "int", "Object[]"});
         
-        addClass("TreeSet", "class", "java.util.TreeSet", new String[]{
-            "add(E e)", "remove(Object o)", "contains(Object o)",
-            "first()", "last()", "pollFirst()", "pollLast()",
-            "lower(E e)", "floor(E e)", "ceiling(E e)", "higher(E e)",
-            "isEmpty()", "size()", "clear()", "clone()",
-            "headSet(E toElement)", "tailSet(E fromElement)", "subSet(E fromElement, E toElement)"
-        }, new String[]{
-            "boolean", "boolean", "boolean",
-            "E", "E", "E", "E",
-            "E", "E", "E", "E",
-            "boolean", "int", "void", "Object",
-            "SortedSet<E>", "SortedSet<E>", "SortedSet<E>"
-        });
+        addJavaClass("LinkedList", new String[]{
+            "add(E e)", "addFirst(E e)", "addLast(E e)", "get(int index)", "getFirst()", "getLast()",
+            "remove(int index)", "removeFirst()", "removeLast()", "poll()", "peek()", "push(E e)", "pop()", "size()"
+        }, new String[]{"boolean", "void", "void", "E", "E", "E", "E", "E", "E", "E", "E", "void", "E", "int"});
         
-        addClass("Map", "interface", "java.util.Map", new String[]{
-            "put(K key, V value)", "putAll(Map<? extends K, ? extends V> m)", "putIfAbsent(K key, V value)",
-            "get(Object key)", "getOrDefault(Object key, V defaultValue)",
-            "remove(Object key)", "remove(Object key, Object value)",
-            "replace(K key, V value)", "replace(K key, V oldValue, V newValue)",
-            "containsKey(Object key)", "containsValue(Object value)", "isEmpty()", "size()",
-            "clear()", "keySet()", "values()", "entrySet()",
-            "forEach(BiConsumer<? super K, ? super V> action)",
-            "compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction)",
-            "computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction)",
-            "computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction)",
-            "merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction)"
-        }, new String[]{
-            "V", "void", "V",
-            "V", "V",
-            "V", "boolean",
-            "V", "boolean",
-            "boolean", "boolean", "boolean", "int",
-            "void", "Set<K>", "Collection<V>", "Set<Map.Entry<K,V>>",
-            "void",
-            "V",
-            "V",
-            "V",
-            "V"
-        });
-        
-        addClass("HashMap", "class", "java.util.HashMap", new String[]{
+        addJavaClass("Map", new String[]{
             "put(K key, V value)", "get(Object key)", "getOrDefault(Object key, V defaultValue)",
             "remove(Object key)", "containsKey(Object key)", "containsValue(Object value)",
-            "isEmpty()", "size()", "clear()", "clone()",
-            "keySet()", "values()", "entrySet()",
-            "putIfAbsent(K key, V value)", "replace(K key, V value)"
-        }, new String[]{
-            "V", "V", "V",
-            "V", "boolean", "boolean",
-            "boolean", "int", "void", "Object",
-            "Set<K>", "Collection<V>", "Set<Map.Entry<K,V>>",
-            "V", "V"
-        });
+            "size()", "isEmpty()", "clear()", "keySet()", "values()", "entrySet()", "putIfAbsent(K key, V value)"
+        }, new String[]{"V", "V", "V", "V", "boolean", "boolean", "int", "boolean", "void", "Set<K>", "Collection<V>", "Set<Map.Entry<K,V>>", "V"});
         
-        addClass("TreeMap", "class", "java.util.TreeMap", new String[]{
-            "put(K key, V value)", "get(Object key)", "remove(Object key)",
-            "containsKey(Object key)", "containsValue(Object value)", "isEmpty()", "size()",
-            "firstKey()", "lastKey()", "firstEntry()", "lastEntry()",
-            "lowerKey(K key)", "floorKey(K key)", "ceilingKey(K key)", "higherKey(K key)",
-            "pollFirstEntry()", "pollLastEntry()",
-            "headMap(K toKey)", "tailMap(K fromKey)", "subMap(K fromKey, K toKey)",
-            "keySet()", "values()", "entrySet()"
-        }, new String[]{
-            "V", "V", "V",
-            "boolean", "boolean", "boolean", "int",
-            "K", "K", "Map.Entry<K,V>", "Map.Entry<K,V>",
-            "K", "K", "K", "K",
-            "Map.Entry<K,V>", "Map.Entry<K,V>",
-            "SortedMap<K,V>", "SortedMap<K,V>", "SortedMap<K,V>",
-            "Set<K>", "Collection<V>", "Set<Map.Entry<K,V>>"
-        });
+        addJavaClass("HashMap", new String[]{
+            "put(K key, V value)", "get(Object key)", "getOrDefault(Object key, V defaultValue)",
+            "remove(Object key)", "containsKey(Object key)", "size()", "isEmpty()", "clear()", "keySet()", "values()", "entrySet()"
+        }, new String[]{"V", "V", "V", "V", "boolean", "int", "boolean", "void", "Set<K>", "Collection<V>", "Set<Map.Entry<K,V>>"});
         
-        addClass("Queue", "interface", "java.util.Queue", new String[]{
-            "add(E e)", "offer(E e)", "remove()", "poll()", "element()", "peek()",
-            "isEmpty()", "size()", "clear()", "contains(Object o)",
-            "iterator()", "toArray()"
-        }, new String[]{
-            "boolean", "boolean", "E", "E", "E", "E",
-            "boolean", "int", "void", "boolean",
-            "Iterator<E>", "Object[]"
-        });
+        addJavaClass("TreeMap", new String[]{
+            "put(K key, V value)", "get(Object key)", "remove(Object key)", "containsKey(Object key)",
+            "firstKey()", "lastKey()", "firstEntry()", "lastEntry()", "pollFirstEntry()", "pollLastEntry()",
+            "lowerKey(K key)", "floorKey(K key)", "ceilingKey(K key)", "higherKey(K key)", "size()"
+        }, new String[]{"V", "V", "V", "boolean", "K", "K", "Map.Entry<K,V>", "Map.Entry<K,V>", "Map.Entry<K,V>", "Map.Entry<K,V>", "K", "K", "K", "K", "int"});
         
-        addClass("Deque", "interface", "java.util.Deque", new String[]{
+        addJavaClass("Set", new String[]{
+            "add(E e)", "remove(Object o)", "contains(Object o)", "size()", "isEmpty()", "clear()", "addAll(Collection<? extends E> c)"
+        }, new String[]{"boolean", "boolean", "boolean", "int", "boolean", "void", "boolean"});
+        
+        addJavaClass("HashSet", new String[]{
+            "add(E e)", "remove(Object o)", "contains(Object o)", "size()", "isEmpty()", "clear()"
+        }, new String[]{"boolean", "boolean", "boolean", "int", "boolean", "void"});
+        
+        addJavaClass("TreeSet", new String[]{
+            "add(E e)", "remove(Object o)", "contains(Object o)", "first()", "last()",
+            "pollFirst()", "pollLast()", "lower(E e)", "floor(E e)", "ceiling(E e)", "higher(E e)", "size()"
+        }, new String[]{"boolean", "boolean", "boolean", "E", "E", "E", "E", "E", "E", "E", "E", "int"});
+        
+        addJavaClass("PriorityQueue", new String[]{
+            "add(E e)", "offer(E e)", "poll()", "peek()", "remove(Object o)", "contains(Object o)", "size()", "isEmpty()", "clear()"
+        }, new String[]{"boolean", "boolean", "E", "E", "boolean", "boolean", "int", "boolean", "void"});
+        
+        addJavaClass("Queue", new String[]{
+            "add(E e)", "offer(E e)", "poll()", "peek()", "remove()", "element()", "size()", "isEmpty()"
+        }, new String[]{"boolean", "boolean", "E", "E", "E", "E", "int", "boolean"});
+        
+        addJavaClass("Deque", new String[]{
             "addFirst(E e)", "addLast(E e)", "offerFirst(E e)", "offerLast(E e)",
-            "removeFirst()", "removeLast()", "pollFirst()", "pollLast()",
-            "getFirst()", "getLast()", "peekFirst()", "peekLast()",
-            "removeFirstOccurrence(Object o)", "removeLastOccurrence(Object o)",
-            "add(E e)", "offer(E e)", "remove()", "poll()", "peek()",
-            "push(E e)", "pop()",
-            "size()", "isEmpty()", "contains(Object o)", "clear()"
-        }, new String[]{
-            "void", "void", "boolean", "boolean",
-            "E", "E", "E", "E",
-            "E", "E", "E", "E",
-            "boolean", "boolean",
-            "boolean", "boolean", "E", "E", "E",
-            "void", "E",
-            "int", "boolean", "boolean", "void"
-        });
+            "pollFirst()", "pollLast()", "peekFirst()", "peekLast()", "push(E e)", "pop()", "size()"
+        }, new String[]{"void", "void", "boolean", "boolean", "E", "E", "E", "E", "void", "E", "int"});
         
-        addClass("Stack", "class", "java.util.Stack", new String[]{
-            "push(E item)", "pop()", "peek()", "empty()", "search(Object o)",
-            "add(E e)", "remove(int index)", "get(int index)", "size()", "isEmpty()"
-        }, new String[]{
-            "E", "E", "E", "boolean", "int",
-            "boolean", "E", "E", "int", "boolean"
-        });
+        addJavaClass("Stack", new String[]{
+            "push(E item)", "pop()", "peek()", "empty()", "search(Object o)", "size()"
+        }, new String[]{"E", "E", "E", "boolean", "int", "int"});
+        
+        addJavaClass("StringBuilder", new String[]{
+            "append(String str)", "append(int i)", "append(double d)", "append(char c)",
+            "insert(int offset, String str)", "delete(int start, int end)", "deleteCharAt(int index)",
+            "replace(int start, int end, String str)", "reverse()", "toString()", "length()", "charAt(int index)"
+        }, new String[]{"StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder", "StringBuilder", "String", "int", "char"});
+        
+        addJavaClass("Character", new String[]{
+            "isDigit(char ch)", "isLetter(char ch)", "isLetterOrDigit(char ch)", "isUpperCase(char ch)",
+            "isLowerCase(char ch)", "isWhitespace(char ch)", "toUpperCase(char ch)", "toLowerCase(char ch)", "getNumericValue(char ch)"
+        }, new String[]{"boolean", "boolean", "boolean", "boolean", "boolean", "boolean", "char", "char", "int"});
+        
+        addJavaClass("BigInteger", new String[]{
+            "valueOf(long val)", "add(BigInteger val)", "subtract(BigInteger val)", "multiply(BigInteger val)",
+            "divide(BigInteger val)", "remainder(BigInteger val)", "mod(BigInteger m)", "pow(int exponent)",
+            "gcd(BigInteger val)", "abs()", "negate()", "compareTo(BigInteger val)", "toString()"
+        }, new String[]{"BigInteger", "BigInteger", "BigInteger", "BigInteger", "BigInteger", "BigInteger", "BigInteger", "BigInteger", "BigInteger", "BigInteger", "BigInteger", "int", "String"});
+        
+        addJavaClass("System", new String[]{
+            "out.println()", "out.print()", "out.printf(String format, Object... args)",
+            "currentTimeMillis()", "nanoTime()", "exit(int status)", "arraycopy(Object src, int srcPos, Object dest, int destPos, int length)"
+        }, new String[]{"void", "void", "PrintStream", "long", "long", "void", "void"});
     }
     
-    private void initUtilityClasses() {
-        addClass("Arrays", "class", "java.util.Arrays", new String[]{
-            "sort(int[] a)", "sort(int[] a, int fromIndex, int toIndex)", "sort(Object[] a)",
-            "binarySearch(int[] a, int key)", "binarySearch(Object[] a, Object key)",
-            "equals(int[] a, int[] a2)", "equals(Object[] a, Object[] a2)",
-            "fill(int[] a, int val)", "fill(int[] a, int fromIndex, int toIndex, int val)",
-            "copyOf(int[] original, int newLength)", "copyOfRange(int[] original, int from, int to)",
-            "toString(int[] a)", "toString(Object[] a)", "deepToString(Object[] a)",
-            "asList(T... a)", "hashCode(int[] a)", "deepHashCode(Object[] a)",
-            "compare(int[] a, int[] b)", "compareUnsigned(int[] a, int[] b)",
-            "mismatch(int[] a, int[] b)", "parallelSort(int[] a)", "parallelPrefix(int[] array, IntBinaryOperator op)",
-            "setAll(int[] array, IntUnaryOperator generator)", "stream(int[] array)", "spliterator(int[] array)"
-        }, new String[]{
-            "void", "void", "void",
-            "int", "int",
-            "boolean", "boolean",
-            "void", "void",
-            "int[]", "int[]",
-            "String", "String", "String",
-            "List<T>", "int", "int",
-            "int", "int",
-            "int", "void", "void",
-            "void", "IntStream", "Spliterator.OfInt"
-        });
-        
-        addClass("Collections", "class", "java.util.Collections", new String[]{
-            "sort(List<T> list)", "sort(List<T> list, Comparator<? super T> c)",
-            "binarySearch(List<? extends Comparable<? super T>> list, T key)",
-            "reverse(List<?> list)", "shuffle(List<?> list)", "shuffle(List<?> list, Random rnd)",
-            "swap(List<?> list, int i, int j)", "rotate(List<?> list, int distance)",
-            "fill(List<? super T> list, T obj)", "copy(List<? super T> dest, List<? extends T> src)",
-            "replaceAll(List<T> list, T oldVal, T newVal)",
-            "indexOfSubList(List<?> source, List<?> target)", "lastIndexOfSubList(List<?> source, List<?> target)",
-            "max(Collection<? extends T> coll)", "min(Collection<? extends T> coll)",
-            "frequency(Collection<?> c, Object o)", "disjoint(Collection<?> c1, Collection<?> c2)",
-            "addAll(Collection<? super T> c, T... elements)",
-            "emptyList()", "emptySet()", "emptyMap()",
-            "singleton(T o)", "singletonList(T o)", "singletonMap(K key, V value)",
-            "unmodifiableList(List<? extends T> list)", "unmodifiableSet(Set<? extends T> s)", "unmodifiableMap(Map<? extends K, ? extends V> m)",
-            "synchronizedList(List<T> list)", "synchronizedSet(Set<T> s)", "synchronizedMap(Map<K,V> m)"
-        }, new String[]{
-            "void", "void",
-            "int",
-            "void", "void", "void",
-            "void", "void",
-            "void", "void",
-            "boolean",
-            "int", "int",
-            "T", "T",
-            "int", "boolean",
-            "boolean",
-            "List<T>", "Set<T>", "Map<K,V>",
-            "Set<T>", "List<T>", "Map<K,V>",
-            "List<T>", "Set<T>", "Map<K,V>",
-            "List<T>", "Set<T>", "Map<K,V>"
-        });
-        
-        addClass("Comparator", "interface", "java.util.Comparator", new String[]{
-            "compare(T o1, T o2)", "equals(Object obj)", "reversed()",
-            "thenComparing(Comparator<? super T> other)",
-            "thenComparing(Function<? super T, ? extends U> keyExtractor)",
-            "comparing(Function<? super T, ? extends U> keyExtractor)",
-            "comparingInt(ToIntFunction<? super T> keyExtractor)",
-            "comparingLong(ToLongFunction<? super T> keyExtractor)",
-            "comparingDouble(ToDoubleFunction<? super T> keyExtractor)",
-            "naturalOrder()", "reverseOrder()", "nullsFirst(Comparator<? super T> comparator)", "nullsLast(Comparator<? super T> comparator)"
-        }, new String[]{
-            "int", "boolean", "Comparator<T>",
-            "Comparator<T>",
-            "Comparator<T>",
-            "Comparator<T>",
-            "Comparator<T>",
-            "Comparator<T>",
-            "Comparator<T>",
-            "Comparator<T>", "Comparator<T>", "Comparator<T>", "Comparator<T>"
-        });
-        
-        addClass("Comparable", "interface", "java.lang.Comparable", new String[]{
-            "compareTo(T o)"
-        }, new String[]{
-            "int"
-        });
-    }
-    
-    private void initIOClasses() {
-        addClass("Scanner", "class", "java.util.Scanner", new String[]{
-            "next()", "nextLine()", "nextInt()", "nextLong()", "nextDouble()", "nextFloat()",
-            "nextBoolean()", "nextByte()", "nextShort()", "nextBigInteger()", "nextBigDecimal()",
-            "hasNext()", "hasNextLine()", "hasNextInt()", "hasNextLong()", "hasNextDouble()",
-            "useDelimiter(String pattern)", "useLocale(Locale locale)", "useRadix(int radix)",
-            "close()", "ioException()", "delimiter()", "locale()", "radix()"
-        }, new String[]{
-            "String", "String", "int", "long", "double", "float",
-            "boolean", "byte", "short", "BigInteger", "BigDecimal",
-            "boolean", "boolean", "boolean", "boolean", "boolean",
-            "Scanner", "Scanner", "Scanner",
-            "void", "IOException", "Pattern", "Locale", "int"
-        });
-        
-        addClass("System", "class", "java.lang.System", new String[]{
-            "out.println()", "out.println(String x)", "out.print(String x)", "out.printf(String format, Object... args)",
-            "err.println()", "err.println(String x)", "err.print(String x)",
-            "in.read()", "in.read(byte[] b)",
-            "currentTimeMillis()", "nanoTime()",
-            "exit(int status)", "gc()", "runFinalization()",
-            "arraycopy(Object src, int srcPos, Object dest, int destPos, int length)",
-            "getenv()", "getenv(String name)", "getProperties()", "getProperty(String key)", "getProperty(String key, String def)",
-            "setProperty(String key, String value)", "clearProperty(String key)",
-            "identityHashCode(Object x)", "lineSeparator()"
-        }, new String[]{
-            "void", "void", "void", "PrintStream",
-            "void", "void", "void",
-            "int", "int",
-            "long", "long",
-            "void", "void", "void",
-            "void",
-            "Map<String,String>", "String", "Properties", "String", "String",
-            "String", "String",
-            "int", "String"
-        });
-    }
-    
-    private void addClass(String className, String kind, String fullName, String[] members, String[] returnTypes) {
+    private void addJavaClass(String className, String[] members, String[] returnTypes) {
         List<CompletionItem> items = new ArrayList<>();
         for (int i = 0; i < members.length; i++) {
             String member = members[i];
             String returnType = i < returnTypes.length ? returnTypes[i] : "void";
-            
-            String insertText = member;
             String detail = returnType + " " + member;
-            
-            if (member.contains("(")) {
-                int parenIndex = member.indexOf("(");
-                String methodName = member.substring(0, parenIndex);
-                String params = member.substring(parenIndex);
-                insertText = methodName + params;
-                detail = returnType + " " + member;
-            }
-            
-            items.add(new CompletionItem(member, returnType, kind.equals("interface") ? "method" : "method", detail, insertText));
+            items.add(new CompletionItem(member, returnType, "method", detail, member));
         }
-        classMembers.put(className, items);
+        javaClassMembers.put(className, items);
     }
     
-    public List<CompletionItem> getCompletions(String className, String prefix) {
+    private void initCppCompletions() {
+        String[] keywords = {
+            "int", "long", "short", "char", "float", "double", "void", "bool", "auto",
+            "const", "static", "extern", "register", "volatile", "signed", "unsigned",
+            "if", "else", "switch", "case", "default", "break", "continue",
+            "for", "while", "do", "goto", "return",
+            "struct", "union", "enum", "typedef", "sizeof",
+            "class", "public", "private", "protected", "virtual", "override", "friend",
+            "new", "delete", "this", "operator", "template", "typename",
+            "try", "catch", "throw", "namespace", "using",
+            "inline", "constexpr", "nullptr", "decltype", "noexcept"
+        };
+        
+        for (String keyword : keywords) {
+            cppKeywords.add(new CompletionItem(keyword, "keyword", "keyword", keyword, keyword));
+        }
+        
+        String[] stlContainers = {
+            "vector", "list", "deque", "queue", "stack", "priority_queue",
+            "set", "multiset", "unordered_set", "map", "multimap", "unordered_map",
+            "pair", "tuple", "array", "bitset", "string"
+        };
+        
+        for (String container : stlContainers) {
+            cppSTL.add(new CompletionItem(container, "class", "class", "std::" + container, container));
+        }
+        
+        addCppFunctions("vector", new String[]{
+            "push_back(const T& val)", "pop_back()", "size()", "empty()", "clear()",
+            "front()", "back()", "begin()", "end()", "rbegin()", "rend()",
+            "insert(iterator pos, const T& val)", "erase(iterator pos)", "erase(iterator first, iterator last)",
+            "resize(size_type n)", "reserve(size_type n)", "at(size_type n)", "operator[](size_type n)"
+        });
+        
+        addCppFunctions("string", new String[]{
+            "size()", "length()", "empty()", "clear()",
+            "push_back(char c)", "pop_back()", "append(const string& str)",
+            "substr(size_type pos, size_type n)", "find(const string& str)", "rfind(const string& str)",
+            "replace(size_type pos, size_type n, const string& str)", "insert(size_type pos, const string& str)",
+            "erase(size_type pos, size_type n)", "c_str()", "at(size_type pos)", "operator[](size_type pos)"
+        });
+        
+        addCppFunctions("set", new String[]{
+            "insert(const value_type& val)", "erase(const value_type& val)", "find(const value_type& val)",
+            "count(const value_type& val)", "size()", "empty()", "clear()",
+            "begin()", "end()", "lower_bound(const value_type& val)", "upper_bound(const value_type& val)"
+        });
+        
+        addCppFunctions("map", new String[]{
+            "insert(const value_type& val)", "erase(const key_type& k)", "find(const key_type& k)",
+            "count(const key_type& k)", "size()", "empty()", "clear()",
+            "begin()", "end()", "lower_bound(const key_type& k)", "upper_bound(const key_type& k)",
+            "operator[](const key_type& k)", "at(const key_type& k)"
+        });
+        
+        addCppFunctions("queue", new String[]{
+            "push(const value_type& val)", "pop()", "front()", "back()", "size()", "empty()"
+        });
+        
+        addCppFunctions("priority_queue", new String[]{
+            "push(const value_type& val)", "pop()", "top()", "size()", "empty()"
+        });
+        
+        addCppFunctions("stack", new String[]{
+            "push(const value_type& val)", "pop()", "top()", "size()", "empty()"
+        });
+        
+        addCppFunctions("deque", new String[]{
+            "push_back(const T& val)", "push_front(const T& val)", "pop_back()", "pop_front()",
+            "front()", "back()", "size()", "empty()", "clear()", "at(size_type n)", "operator[](size_type n)"
+        });
+        
+        addCppFunctions("pair", new String[]{
+            "first", "second", "make_pair(T1 x, T2 y)"
+        });
+        
+        addCppFunctions("algorithm", new String[]{
+            "sort(RandomAccessIterator first, RandomAccessIterator last)",
+            "sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp)",
+            "stable_sort(RandomAccessIterator first, RandomAccessIterator last)",
+            "binary_search(ForwardIterator first, ForwardIterator last, const T& val)",
+            "lower_bound(ForwardIterator first, ForwardIterator last, const T& val)",
+            "upper_bound(ForwardIterator first, ForwardIterator last, const T& val)",
+            "find(InputIterator first, InputIterator last, const T& val)",
+            "find_if(InputIterator first, InputIterator last, Predicate pred)",
+            "count(InputIterator first, InputIterator last, const T& val)",
+            "reverse(BidirectionalIterator first, BidirectionalIterator last)",
+            "rotate(ForwardIterator first, ForwardIterator middle, ForwardIterator last)",
+            "swap(T& a, T& b)", "min(const T& a, const T& b)", "max(const T& a, const T& b)",
+            "min_element(ForwardIterator first, ForwardIterator last)",
+            "max_element(ForwardIterator first, ForwardIterator last)",
+            "next_permutation(BidirectionalIterator first, BidirectionalIterator last)",
+            "prev_permutation(BidirectionalIterator first, BidirectionalIterator last)",
+            "nth_element(RandomAccessIterator first, RandomAccessIterator nth, RandomAccessIterator last)",
+            "unique(ForwardIterator first, ForwardIterator last)",
+            "remove(ForwardIterator first, ForwardIterator last, const T& val)",
+            "fill(ForwardIterator first, ForwardIterator last, const T& val)",
+            "copy(InputIterator first, InputIterator last, OutputIterator result)",
+            "for_each(InputIterator first, InputIterator last, Function fn)",
+            "accumulate(InputIterator first, InputIterator last, T init)"
+        });
+        
+        addCppFunctions("cmath", new String[]{
+            "abs(double x)", "fabs(double x)", "floor(double x)", "ceil(double x)", "round(double x)",
+            "sqrt(double x)", "pow(double base, double exponent)", "exp(double x)", "log(double x)", "log10(double x)",
+            "sin(double x)", "cos(double x)", "tan(double x)", "asin(double x)", "acos(double x)", "atan(double x)",
+            "sinh(double x)", "cosh(double x)", "tanh(double x)", "fmod(double x, double y)"
+        });
+        
+        addCppFunctions("cstring", new String[]{
+            "strlen(const char* str)", "strcpy(char* dest, const char* src)", "strcat(char* dest, const char* src)",
+            "strcmp(const char* str1, const char* str2)", "strncmp(const char* str1, const char* str2, size_t n)",
+            "memcpy(void* dest, const void* src, size_t n)", "memset(void* ptr, int value, size_t n)",
+            "memmove(void* dest, const void* src, size_t n)", "memcmp(const void* ptr1, const void* ptr2, size_t n)"
+        });
+        
+        addCppFunctions("cstdio", new String[]{
+            "printf(const char* format, ...)", "scanf(const char* format, ...)",
+            "sprintf(char* str, const char* format, ...)", "sscanf(const char* str, const char* format, ...)",
+            "fprintf(FILE* stream, const char* format, ...)", "fscanf(FILE* stream, const char* format, ...)",
+            "gets(char* str)", "puts(const char* str)", "getchar()", "putchar(int c)",
+            "fopen(const char* filename, const char* mode)", "fclose(FILE* stream)", "feof(FILE* stream)"
+        });
+        
+        addCppFunctions("iostream", new String[]{
+            "cin >> var", "cout << var", "cerr << var", "endl", "flush",
+            "getline(istream& is, string& str)", "cin.get()", "cin.getline(char* s, streamsize n)"
+        });
+    }
+    
+    private void addCppFunctions(String className, String[] functions) {
+        List<CompletionItem> items = new ArrayList<>();
+        for (String func : functions) {
+            items.add(new CompletionItem(func, "function", "function", func, func));
+        }
+        cppFunctions.put(className, items);
+    }
+    
+    public List<CompletionItem> getCompletions(String className, String prefix, String language) {
         List<CompletionItem> result = new ArrayList<>();
         
-        if (className != null && !className.isEmpty()) {
-            List<CompletionItem> classItems = classMembers.get(className);
-            if (classItems != null) {
-                for (CompletionItem item : classItems) {
-                    if (prefix == null || prefix.isEmpty() || item.getName().toLowerCase().startsWith(prefix.toLowerCase())) {
-                        result.add(item);
+        if ("cpp".equals(language) || "c".equals(language)) {
+            if (className != null && !className.isEmpty()) {
+                List<CompletionItem> classItems = cppFunctions.get(className);
+                if (classItems != null) {
+                    for (CompletionItem item : classItems) {
+                        if (prefix == null || prefix.isEmpty() || item.getName().toLowerCase().startsWith(prefix.toLowerCase())) {
+                            result.add(item);
+                        }
+                    }
+                }
+            } else {
+                result.addAll(cppKeywords);
+                result.addAll(cppSTL);
+                for (Map.Entry<String, List<CompletionItem>> entry : cppFunctions.entrySet()) {
+                    if (!entry.getKey().equals("algorithm") && !entry.getKey().equals("cmath") 
+                        && !entry.getKey().equals("cstring") && !entry.getKey().equals("cstdio")
+                        && !entry.getKey().equals("iostream")) {
+                        result.add(new CompletionItem(entry.getKey(), "class", "class", "std::" + entry.getKey(), entry.getKey()));
                     }
                 }
             }
         } else {
-            for (Map.Entry<String, List<CompletionItem>> entry : classMembers.entrySet()) {
-                if (prefix == null || prefix.isEmpty() || entry.getKey().toLowerCase().startsWith(prefix.toLowerCase())) {
-                    result.add(new CompletionItem(entry.getKey(), "class", "class", entry.getKey(), entry.getKey()));
+            if (className != null && !className.isEmpty()) {
+                List<CompletionItem> classItems = javaClassMembers.get(className);
+                if (classItems != null) {
+                    for (CompletionItem item : classItems) {
+                        if (prefix == null || prefix.isEmpty() || item.getName().toLowerCase().startsWith(prefix.toLowerCase())) {
+                            result.add(item);
+                        }
+                    }
+                }
+            } else {
+                for (Map.Entry<String, List<CompletionItem>> entry : javaClassMembers.entrySet()) {
+                    if (prefix == null || prefix.isEmpty() || entry.getKey().toLowerCase().startsWith(prefix.toLowerCase())) {
+                        result.add(new CompletionItem(entry.getKey(), "class", "class", entry.getKey(), entry.getKey()));
+                    }
                 }
             }
         }
@@ -587,11 +359,17 @@ public class CodeCompletionService {
         return result;
     }
     
-    public List<CompletionItem> getAllClasses() {
+    public List<CompletionItem> getAllClasses(String language) {
         List<CompletionItem> result = new ArrayList<>();
-        for (String className : classMembers.keySet()) {
-            result.add(new CompletionItem(className, "class", "class", className, className));
+        
+        if ("cpp".equals(language) || "c".equals(language)) {
+            result.addAll(cppSTL);
+        } else {
+            for (String className : javaClassMembers.keySet()) {
+                result.add(new CompletionItem(className, "class", "class", className, className));
+            }
         }
+        
         return result;
     }
 }

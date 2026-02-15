@@ -8,6 +8,7 @@ import * as monaco from 'monaco-editor'
 import { setupJavaLanguage, setupIntelliJTheme } from '../config/javaConfig'
 import { setupAutoBrackets } from '../config/autoBrackets'
 import { setupJavaCompletion } from '../config/javaCompletion'
+import { setupCppCompletion } from '../config/cppCompletion'
 import { setupCodeSnippets } from '../config/codeSnippets'
 import { setupIntelliJKeybindings } from '../config/keybindings'
 import { setupJavaFormatter } from '../config/javaFormatter'
@@ -16,6 +17,10 @@ const props = defineProps({
   initialContent: {
     type: String,
     default: ''
+  },
+  language: {
+    type: String,
+    default: 'java'
   }
 })
 
@@ -38,6 +43,15 @@ onBeforeUnmount(() => {
   }
   if (settingsHandler) {
     window.removeEventListener('editorSettingsChange', settingsHandler)
+  }
+})
+
+watch(() => props.language, (newLang) => {
+  if (editorInstance) {
+    const model = editorInstance.getModel()
+    if (model) {
+      monaco.editor.setModelLanguage(model, newLang === 'c' ? 'c' : newLang === 'cpp' ? 'cpp' : 'java')
+    }
   }
 })
 
@@ -104,12 +118,15 @@ const initEditor = () => {
   setupJavaLanguage(monaco)
   setupAutoBrackets(monaco)
   setupJavaCompletion(monaco)
+  setupCppCompletion(monaco)
   setupCodeSnippets(monaco)
   setupJavaFormatter(monaco)
   
+  const monacoLanguage = props.language === 'c' ? 'c' : props.language === 'cpp' ? 'cpp' : 'java'
+  
   editorInstance = monaco.editor.create(editorContainer.value, {
     value: props.initialContent,
-    language: 'java',
+    language: monacoLanguage,
     theme: 'intellij-dark',
     fontSize: 14,
     fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
@@ -205,6 +222,16 @@ const getContent = () => {
   return ''
 }
 
+const setLanguage = (lang) => {
+  if (editorInstance) {
+    const model = editorInstance.getModel()
+    if (model) {
+      const monacoLang = lang === 'c' ? 'c' : lang === 'cpp' ? 'cpp' : 'java'
+      monaco.editor.setModelLanguage(model, monacoLang)
+    }
+  }
+}
+
 const formatCode = () => {
   if (editorInstance) {
     editorInstance.getAction('editor.action.formatDocument')?.run()
@@ -238,17 +265,12 @@ const showReplace = () => {
 defineExpose({
   setContent,
   getContent,
+  setLanguage,
   formatCode,
   undo,
   redo,
   showFind,
   showReplace
-})
-
-watch(() => props.initialContent, (newContent) => {
-  if (editorInstance && editorInstance.getValue() !== newContent) {
-    editorInstance.setValue(newContent)
-  }
 })
 </script>
 

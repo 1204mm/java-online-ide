@@ -1,7 +1,7 @@
 const API_BASE_URL = 'http://localhost:8080/api'
 
 export const codeApi = {
-  async runCode(code, input = '', timeout = 10000) {
+  async runCode(code, input = '', language = 'java', timeout = 30000) {
     try {
       const response = await fetch(`${API_BASE_URL}/run`, {
         method: 'POST',
@@ -11,6 +11,7 @@ export const codeApi = {
         body: JSON.stringify({
           code,
           input,
+          language,
           timeout,
         }),
       })
@@ -29,11 +30,12 @@ export const codeApi = {
     }
   },
 
-  async getCompletions(className, prefix) {
+  async getCompletions(className, prefix, language = 'java') {
     try {
       const params = new URLSearchParams()
       if (className) params.append('className', className)
       if (prefix) params.append('prefix', prefix)
+      params.append('language', language)
       
       const response = await fetch(`${API_BASE_URL}/completions?${params.toString()}`)
       
@@ -48,9 +50,12 @@ export const codeApi = {
     }
   },
 
-  async getAllClasses() {
+  async getAllClasses(language = 'java') {
     try {
-      const response = await fetch(`${API_BASE_URL}/classes`)
+      const params = new URLSearchParams()
+      params.append('language', language)
+      
+      const response = await fetch(`${API_BASE_URL}/classes?${params.toString()}`)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

@@ -11,6 +11,8 @@ public class CodeRequest {
     
     private String input;
     
+    private String language = "java";
+    
     private int timeout = 5000;
 
     public String getCode() {
@@ -35,6 +37,14 @@ public class CodeRequest {
 
     public void setInput(String input) {
         this.input = input;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
     public int getTimeout() {

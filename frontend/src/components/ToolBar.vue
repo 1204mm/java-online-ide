@@ -55,6 +55,11 @@
       <div class="toolbar-divider"></div>
       
       <div class="toolbar-group">
+        <select class="language-select" v-model="selectedLanguage" @change="$emit('languageChange', selectedLanguage)" title="选择编程语言">
+          <option value="java">Java</option>
+          <option value="cpp">C++</option>
+          <option value="c">C</option>
+        </select>
         <button class="toolbar-btn run-btn" @click="$emit('runCode')" :disabled="isRunning" title="运行代码 (F5)">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
             <path d="M8 5v14l11-7z"/>
@@ -247,7 +252,7 @@
 <script setup>
 import { ref } from 'vue'
 
-defineProps({
+const props = defineProps({
   showMarkdown: {
     type: Boolean,
     default: false
@@ -255,12 +260,17 @@ defineProps({
   isRunning: {
     type: Boolean,
     default: false
+  },
+  language: {
+    type: String,
+    default: 'java'
   }
 })
 
 const showShortcuts = ref(false)
+const selectedLanguage = ref(props.language)
 
-defineEmits(['newFile', 'openFile', 'saveFile', 'formatCode', 'undo', 'redo', 'find', 'replace', 'toggleSettings', 'resetCode', 'toggleMarkdown', 'runCode'])
+defineEmits(['newFile', 'openFile', 'saveFile', 'formatCode', 'undo', 'redo', 'find', 'replace', 'toggleSettings', 'resetCode', 'toggleMarkdown', 'runCode', 'languageChange'])
 </script>
 
 <style scoped>
@@ -285,6 +295,26 @@ defineEmits(['newFile', 'openFile', 'saveFile', 'formatCode', 'undo', 'redo', 'f
   display: flex;
   align-items: center;
   gap: 2px;
+}
+
+.language-select {
+  padding: 6px 10px;
+  background-color: #3c3c3c;
+  border: 1px solid #4c4c4c;
+  border-radius: 4px;
+  color: #d4d4d4;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  margin-right: 8px;
+}
+
+.language-select:hover {
+  background-color: #4c4c4c;
+}
+
+.language-select:focus {
+  border-color: #4a90d9;
 }
 
 .toolbar-divider {
