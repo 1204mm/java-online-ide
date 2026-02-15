@@ -490,7 +490,7 @@ const classMethods = {
 
 export const setupJavaCompletion = (monaco) => {
   const javaCommonClasses = Object.keys(classMethods)
-
+  
   const javaAnnotations = [
     'Override', 'Deprecated', 'SuppressWarnings', 'FunctionalInterface',
     'SafeVarargs', 'Native', 'Target', 'Retention', 'Documented', 'Inherited',
@@ -520,7 +520,9 @@ export const setupJavaCompletion = (monaco) => {
     )
   )
 
-  const typeCompletions = javaTypes.map(type =>
+  const uniqueTypes = [...new Set([...javaTypes, ...javaCommonClasses])]
+  
+  const typeCompletions = uniqueTypes.map(type =>
     createCompletionItem(
       type,
       monaco.languages.CompletionItemKind.Class,
@@ -528,17 +530,6 @@ export const setupJavaCompletion = (monaco) => {
       'Java类',
       `Java类: ${type}`,
       `2${type}`
-    )
-  )
-
-  const classCompletions = javaCommonClasses.map(cls =>
-    createCompletionItem(
-      cls,
-      monaco.languages.CompletionItemKind.Class,
-      cls,
-      'Java类',
-      `Java类: ${cls}`,
-      `2${cls}`
     )
   )
 
@@ -627,7 +618,6 @@ export const setupJavaCompletion = (monaco) => {
     ...modifierCompletions,
     ...keywordCompletions,
     ...typeCompletions,
-    ...classCompletions,
     ...annotationCompletions,
     ...methodCompletions
   ]
