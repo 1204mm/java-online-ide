@@ -640,10 +640,19 @@ export const setupJavaCompletion = (monaco) => {
 
       const dotMatch = textBeforeCursor.match(/(\w+)\.\s*(\w*)$/)
       if (dotMatch) {
-        const className = dotMatch[1]
+        const identifier = dotMatch[1]
         const methodPrefix = dotMatch[2]
         
-        const methods = classMethods[className]
+        let methods = classMethods[identifier]
+        
+        if (!methods) {
+          const fullContent = model.getValue()
+          const variableType = extractVariableType(fullContent, identifier)
+          if (variableType) {
+            methods = classMethods[variableType]
+          }
+        }
+        
         if (methods) {
           const methodCompletions = methods
             .filter(m => !methodPrefix || m.name.toLowerCase().startsWith(methodPrefix.toLowerCase()))
@@ -696,11 +705,41 @@ export const setupJavaCompletion = (monaco) => {
   })
 }
 
+const extractVariableType = (code, varName) => {
+  const allTypes = [
+    'int', 'long', 'short', 'byte', 'float', 'double', 'boolean', 'char',
+    'String', 'Integer', 'Long', 'Double', 'Float', 'Boolean', 'Character',
+    'Object', 'Class', 'List', 'ArrayList', 'LinkedList', 'Map', 'HashMap', 'TreeMap',
+    'Set', 'HashSet', 'TreeSet', 'Scanner', 'StringBuilder', 'StringBuffer',
+    'Thread', 'Runnable', 'File', 'Path', 'InputStream', 'OutputStream',
+    'Reader', 'Writer', 'Exception', 'BigInteger', 'BigDecimal',
+    'Queue', 'Deque', 'Stack', 'PriorityQueue', 'Random', 'Arrays', 'Collections',
+    'Comparator', 'StringTokenizer', 'BufferedReader', 'BufferedWriter', 'PrintWriter'
+  ]
+  
+  for (const type of allTypes) {
+    const patterns = [
+      new RegExp(`\\b${type}\\s+${varName}\\s*=`),
+      new RegExp(`\\b${type}\\s+${varName}\\s*;`),
+      new RegExp(`\\b${type}<[^>]+>\\s+${varName}\\s*=`),
+      new RegExp(`\\b${type}<[^>]+>\\s+${varName}\\s*;`),
+    ]
+    
+    for (const pattern of patterns) {
+      if (pattern.test(code)) {
+        return type
+      }
+    }
+  }
+  
+  return null
+}
+
 const extractVariables = (code, monaco) => {
   const variables = []
   const seenVars = new Set()
 
-  const typePattern = /\b(?:int|long|short|byte|float|double|boolean|char|String|Integer|Long|Double|Float|Boolean|Character|Object|Class|List|ArrayList|Map|HashMap|Set|HashSet|Scanner|StringBuilder|Thread|Runnable|File|Path|InputStream|OutputStream|Reader|Writer|Exception|Runnable|var)\s+(\w+)\s*[=;]/
+  const typePattern = /\b(?:int|long|short|byte|float|double|boolean|char|String|Integer|Long|Double|Float|Boolean|Character|Object|Class|List|ArrayList|LinkedList|Map|HashMap|TreeMap|Set|HashSet|TreeSet|Scanner|StringBuilder|StringBuffer|Thread|Runnable|File|Path|InputStream|OutputStream|Reader|Writer|Exception|BigInteger|BigDecimal|Queue|Deque|Stack|PriorityQueue|Random|var)\s+(\w+)\s*[=;]/
   
   let match
   const typeRegex = new RegExp(typePattern.source, 'g')
