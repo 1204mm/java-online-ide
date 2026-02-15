@@ -563,6 +563,17 @@ export const setupJavaCompletion = (monaco) => {
     ),
   ]
 
+  const constructorCompletions = javaCommonClasses.map(cls =>
+    createCompletionItem(
+      cls,
+      monaco.languages.CompletionItemKind.Constructor,
+      `${cls}(\${1:})`,
+      `构造函数: ${cls}`,
+      `创建 ${cls} 对象`,
+      `5${cls}`
+    )
+  )
+
   const modifierCompletions = [
     createCompletionItem(
       'public static void main',
@@ -622,11 +633,100 @@ export const setupJavaCompletion = (monaco) => {
     ...methodCompletions
   ]
 
+  const needsImportClasses = {
+    'Scanner': 'java.util.Scanner',
+    'ArrayList': 'java.util.ArrayList',
+    'LinkedList': 'java.util.LinkedList',
+    'HashMap': 'java.util.HashMap',
+    'TreeMap': 'java.util.TreeMap',
+    'HashSet': 'java.util.HashSet',
+    'TreeSet': 'java.util.TreeSet',
+    'PriorityQueue': 'java.util.PriorityQueue',
+    'Queue': 'java.util.Queue',
+    'Deque': 'java.util.Deque',
+    'Stack': 'java.util.Stack',
+    'Arrays': 'java.util.Arrays',
+    'Collections': 'java.util.Collections',
+    'List': 'java.util.List',
+    'Map': 'java.util.Map',
+    'Set': 'java.util.Set',
+    'BigInteger': 'java.math.BigInteger',
+    'BigDecimal': 'java.math.BigDecimal',
+    'BufferedReader': 'java.io.BufferedReader',
+    'BufferedWriter': 'java.io.BufferedWriter',
+    'FileReader': 'java.io.FileReader',
+    'FileWriter': 'java.io.FileWriter',
+    'File': 'java.io.File',
+    'Path': 'java.nio.file.Path',
+    'Paths': 'java.nio.file.Paths',
+    'InputStream': 'java.io.InputStream',
+    'OutputStream': 'java.io.OutputStream',
+    'StringTokenizer': 'java.util.StringTokenizer',
+    'Random': 'java.util.Random',
+    'Comparator': 'java.util.Comparator',
+  }
+
+  const addImportIfNeeded = (model, className) => {
+    const importPath = needsImportClasses[className]
+    if (!importPath) return null
+    
+    const content = model.getValue()
+    const importStatement = `import ${importPath};`
+    
+    if (content.includes(importStatement)) return null
+    
+    const existingImports = content.match(/^import\s+[\w.]+;\s*$/gm) || []
+    const packageMatch = content.match(/^package\s+[\w.]+;\s*$/m)
+    
+    let insertLine = 1
+    if (packageMatch) {
+      const packageEndLine = content.substring(0, packageMatch.index + packageMatch[0].length).split('\n').length
+      insertLine = packageEndLine + 1
+    }
+    
+    if (existingImports.length > 0) {
+      const lastImport = existingImports[existingImports.length - 1]
+      const lastImportIndex = content.lastIndexOf(lastImport)
+      insertLine = content.substring(0, lastImportIndex + lastImport.length).split('\n').length + 1
+    }
+    
+    return { line: insertLine, import: importStatement }
+  }
+
   monaco.languages.registerCompletionItemProvider('java', {
     triggerCharacters: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._@'.split(''),
     provideCompletionItems: (model, position) => {
       const lineContent = model.getLineContent(position.lineNumber)
       const textBeforeCursor = lineContent.substring(0, position.column - 1)
+
+      const newMatch = textBeforeCursor.match(/new\s+(\w*)$/)
+      if (newMatch) {
+        const prefix = newMatch[1]
+        const filteredConstructors = constructorCompletions.filter(c => 
+          !prefix || c.label.toLowerCase().startsWith(prefix.toLowerCase())
+        ).map(c => {
+          const importInfo = addImportIfNeeded(model, c.label)
+          return {
+            ...c,
+            additionalTextEdits: importInfo ? [{
+              range: {
+                startLineNumber: importInfo.line,
+                startColumn: 1,
+                endLineNumber: importInfo.line,
+                endColumn: 1
+              },
+              text: importInfo.import + '\n'
+            }] : undefined,
+            range: {
+              startLineNumber: position.lineNumber,
+              startColumn: position.column - prefix.length,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column
+            }
+          }
+        })
+        return { suggestions: filteredConstructors }
+      }
 
       const dotMatch = textBeforeCursor.match(/(\w+)\.\s*(\w*)$/)
       if (dotMatch) {
@@ -681,15 +781,27 @@ export const setupJavaCompletion = (monaco) => {
       })
 
       return {
-        suggestions: filteredCompletions.map(item => ({
-          ...item,
-          range: {
-            startLineNumber: position.lineNumber,
-            startColumn: position.column - currentWord.length,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column
+        suggestions: filteredCompletions.map(item => {
+          const importInfo = addImportIfNeeded(model, item.label)
+          return {
+            ...item,
+            additionalTextEdits: importInfo ? [{
+              range: {
+                startLineNumber: importInfo.line,
+                startColumn: 1,
+                endLineNumber: importInfo.line,
+                endColumn: 1
+              },
+              text: importInfo.import + '\n'
+            }] : undefined,
+            range: {
+              startLineNumber: position.lineNumber,
+              startColumn: position.column - currentWord.length,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column
+            }
           }
-        }))
+        })
       }
     }
   })
