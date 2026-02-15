@@ -563,16 +563,15 @@ export const setupJavaCompletion = (monaco) => {
     ),
   ]
 
-  const constructorCompletions = javaCommonClasses.map(cls =>
-    createCompletionItem(
-      cls,
-      monaco.languages.CompletionItemKind.Constructor,
-      `${cls}(\${1:})`,
-      `构造函数: ${cls}`,
-      `创建 ${cls} 对象`,
-      `5${cls}`
-    )
-  )
+  const constructorCompletions = javaCommonClasses.map(cls => ({
+    label: cls,
+    kind: monaco.languages.CompletionItemKind.Constructor,
+    insertText: cls + '($1)',
+    detail: `构造函数: ${cls}`,
+    documentation: `创建 ${cls} 对象`,
+    sortText: `5${cls}`,
+    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+  }))
 
   const modifierCompletions = [
     createCompletionItem(
@@ -675,26 +674,27 @@ export const setupJavaCompletion = (monaco) => {
     
     if (content.includes(importStatement)) return null
     
-    const existingImports = content.match(/^import\s+[\w.]+;\s*$/gm) || []
-    const packageMatch = content.match(/^package\s+[\w.]+;\s*$/m)
-    
+    const lines = content.split('\n')
     let insertLine = 1
-    if (packageMatch) {
-      const packageEndLine = content.substring(0, packageMatch.index + packageMatch[0].length).split('\n').length
-      insertLine = packageEndLine + 1
-    }
     
-    if (existingImports.length > 0) {
-      const lastImport = existingImports[existingImports.length - 1]
-      const lastImportIndex = content.lastIndexOf(lastImport)
-      insertLine = content.substring(0, lastImportIndex + lastImport.length).split('\n').length + 1
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+      if (line.startsWith('package ')) {
+        insertLine = i + 2
+      } else if (line.startsWith('import ')) {
+        insertLine = i + 2
+      } else if (line === '' || line.startsWith('//')) {
+        continue
+      } else if (line.startsWith('public class') || line.startsWith('public interface') || line.startsWith('class ')) {
+        break
+      }
     }
     
     return { line: insertLine, import: importStatement }
   }
 
   monaco.languages.registerCompletionItemProvider('java', {
-    triggerCharacters: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._@'.split(''),
+    triggerCharacters: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._@ '.split(''),
     provideCompletionItems: (model, position) => {
       const lineContent = model.getLineContent(position.lineNumber)
       const textBeforeCursor = lineContent.substring(0, position.column - 1)
@@ -717,6 +717,7 @@ export const setupJavaCompletion = (monaco) => {
               },
               text: importInfo.import + '\n'
             }] : undefined,
+            insertText: c.insertText,
             range: {
               startLineNumber: position.lineNumber,
               startColumn: position.column - prefix.length,
