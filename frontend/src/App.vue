@@ -210,7 +210,7 @@ const handleRunCode = async () => {
   const code = editorRef.value?.getContent()
   if (!code) return
   
-  const needsInput = /Scanner|System\.in|cin|scanf|getchar|gets/.test(code)
+  const needsInput = /Scanner.*\.next|System\.in|cin\s*>>|scanf|getchar|gets\s*\(/.test(code)
   
   if (needsInput && !userInput.value.trim()) {
     showResult.value = true

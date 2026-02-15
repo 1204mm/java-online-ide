@@ -582,46 +582,6 @@ export const setupJavaCompletion = (monaco) => {
       'Java程序入口方法',
       '0main'
     ),
-    createCompletionItem(
-      'public',
-      monaco.languages.CompletionItemKind.Keyword,
-      'public',
-      'public',
-      '公共访问修饰符',
-      '1public'
-    ),
-    createCompletionItem(
-      'private',
-      monaco.languages.CompletionItemKind.Keyword,
-      'private',
-      'private',
-      '私有访问修饰符',
-      '1private'
-    ),
-    createCompletionItem(
-      'protected',
-      monaco.languages.CompletionItemKind.Keyword,
-      'protected',
-      'protected',
-      '受保护访问修饰符',
-      '1protected'
-    ),
-    createCompletionItem(
-      'static',
-      monaco.languages.CompletionItemKind.Keyword,
-      'static',
-      'static',
-      '静态修饰符',
-      '1static'
-    ),
-    createCompletionItem(
-      'final',
-      monaco.languages.CompletionItemKind.Keyword,
-      'final',
-      'final',
-      '最终修饰符',
-      '1final'
-    ),
   ]
 
   const allCompletions = [
@@ -631,6 +591,15 @@ export const setupJavaCompletion = (monaco) => {
     ...annotationCompletions,
     ...methodCompletions
   ]
+
+  const uniqueCompletions = []
+  const seenLabels = new Set()
+  for (const item of allCompletions) {
+    if (!seenLabels.has(item.label)) {
+      seenLabels.add(item.label)
+      uniqueCompletions.push(item)
+    }
+  }
 
   const needsImportClasses = {
     'Scanner': 'java.util.Scanner',
@@ -774,7 +743,7 @@ export const setupJavaCompletion = (monaco) => {
       const variableCompletions = extractVariables(fullContent, monaco)
       const userMethodCompletions = extractMethods(fullContent, monaco)
 
-      const combinedCompletions = [...allCompletions, ...variableCompletions, ...userMethodCompletions]
+      const combinedCompletions = [...uniqueCompletions, ...variableCompletions, ...userMethodCompletions]
 
       const filteredCompletions = combinedCompletions.filter(item => {
         if (!currentWord) return true
